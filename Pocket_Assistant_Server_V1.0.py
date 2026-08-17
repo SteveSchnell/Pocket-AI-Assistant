@@ -1,9 +1,4 @@
 """
-==================================================
-STREAMING AI ASSISTANT SERVER
-FOR ESP32-S3 PUSH-TO-TALK CLIENT
-==================================================
-
 INSTALL
 -------
 pip install websockets
@@ -15,7 +10,7 @@ pip install audioop-lts
 
 RUN
 ---
-python stream_server.py
+Pocket_Assistant_Server_V1.0.py
 
 ESP32 CONNECTS TO
 -----------------
