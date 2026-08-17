@@ -1,0 +1,9 @@
+VOICE_NAME=af_heart
+
+ASSISTANT_NAME=AI
+
+USER_NAME=Mark
+
+ASSISTANT_PERSONALITY=I do whatever I am told to do.
+
+ASSISTANT_LORE=
