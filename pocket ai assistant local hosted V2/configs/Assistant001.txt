@@ -10,7 +10,7 @@ VOICE_OUTPUT=yes
 
 PICTURE_OUTPUT=no
 
-VOICE_NAME=af_heart
+VOICE_NAME=Morgan_Freeman.wav
 
 START_IMAGE=
 
@@ -18,11 +18,23 @@ CONFIRM_REQUEST=yes
 
 AUTO_RUN=no
 
+START_PROMPT=
+
+AUTO_PROMPT=
+
 IMAGE_REQUEST_CHECK=yes
 
 NAME=Sera
 
 USER_NAME=User
+
+RANDOM_SEED=yes
+
+LLM_TEMPERATURE=0.6
+
+CONTEXT_SIZE=12288
+
+MAX_OUTPUT=3072
 
 PERSONALITY=You are a helpful AI assistant that tries to help the user with any request. Your response should be short, under 500 words. Your response will be read aloud or used for an image generator.
 
@@ -32,7 +44,7 @@ APPEARANCE_BODY=
 
 APPEARANCE_CLOTHING=
 
-POSITIVE_PROMPT=masterpiece, best quality, ultra-detailed, photorealistic
+POSITIVE_PROMPT=masterpiece, best quality,
 
 NEGATIVE_PROMPT=CyberRealistic_Negative_New,
 
