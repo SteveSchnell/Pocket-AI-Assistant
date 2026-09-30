@@ -6,10 +6,37 @@ MAX98357A amplifier
 SSD1306 Screen
 */
 
+/*
+4 = Screen RST
+5 = Screen DC
+6 = Screen CS
+
+15 = Amplifier BCLK
+16 = Amplifier LRC
+17 = Amplifier DIN
+
+8 = Microphone SD
+3 = Microphone WS
+
+9 = Microphone SCK
+
+11 = Screen SDA
+12 = Screen SCL
+
+21 = Button
+20 = Button
+47 = Button
+38 = Button
+45 = Button
+
+40 = Button
+*/
+
 #include <WiFi.h>
 #include <ArduinoWebsockets.h>
 #include <driver/i2s.h>
 #include <Adafruit_SSD1306.h>
+#include <WiFiUdp.h>
 
 using namespace websockets;
 
@@ -20,7 +47,7 @@ using namespace websockets;
 //
 
 const char* WIFI_SSID = "------";
-const char* WIFI_PASS = "----------";
+const char* WIFI_PASS = "------";
 
 //
 // ==================================================
@@ -28,7 +55,11 @@ const char* WIFI_PASS = "----------";
 // ==================================================
 //
 
-const char* WS_SERVER = "ws://---.---.---.---:9000";  //Server IP
+String WS_SERVER;  //Server IP
+const int WS_PORT = 9000;       //Server IP
+
+WiFiUDP udp;
+const int UDP_PORT = 1234;
 
 //
 // ==================================================
@@ -48,11 +79,11 @@ int configCount = 0;             // Tracks how many words we actually found
 // ==================================================
 //
 
-#define BUTTON_A 48  //A
-#define BUTTON_B 45  //B
-#define BUTTON_C 21  //←
-#define BUTTON_D 20  //↑
-#define BUTTON_E 47  //→
+#define BUTTON_A 20  //A
+#define BUTTON_B 21  //B
+#define BUTTON_C 48  //←
+#define BUTTON_D 47  //↑
+#define BUTTON_E 45  //→
 #define BUTTON_F 40  //↓
 
 int BUTTON_A_STAT = 0;
@@ -357,7 +388,7 @@ void showWebSocket() {
 void showConfig() {
   setBackgraound();
   lcd.setTextSize(2);
-  lcd.setTextColor(TFT_WHITE );
+  lcd.setTextColor(TFT_WHITE);
   lcd.setTextDatum(textdatum_t::middle_center);
 
   int activeConfigID_A = activeConfigID + 1;
@@ -372,10 +403,10 @@ void showConfig() {
   lcd.drawString("Select config to load.", 160, 270);
 
   lcd.setTextSize(1.5);
-  lcd.setTextColor(TFT_GREEN );
+  lcd.setTextColor(TFT_GREEN);
   lcd.drawString(configArray[activeConfigID], 160, 300);
   lcd.setTextSize(1.5);
-  lcd.setTextColor(TFT_WHITE );
+  lcd.setTextColor(TFT_WHITE);
   lcd.drawString("<<<          >>>", 160, 320);
   lcd.setTextColor(TFT_DARKGREEN);
 
@@ -386,7 +417,7 @@ void showConfig() {
   lcd.setTextDatum(textdatum_t::middle_center);
   lcd.setTextSize(2);
   lcd.setTextColor(TFT_YELLOW);
-  lcd.drawString("Left/Right      A Confirm", 160, 460);
+  lcd.drawString("X/Y         A Confirm", 160, 460);
 }
 
 void showMassege(String massege, uint16_t color, int size) {
@@ -403,7 +434,7 @@ void showMainManu() {
   lcd.setTextColor(TFT_YELLOW);
   lcd.setTextDatum(textdatum_t::middle_center);
   lcd.drawString("B image    A record", 160, 450);
-  lcd.drawString("UP clear    Downe restart", 160, 470);
+  lcd.drawString("R clear    L restart", 160, 470);
 }
 
 void showUserText(String text) {
@@ -423,8 +454,7 @@ void setBackgraound() {
   if (imageBuffer != NULL && menuID != 1) {
     lcd.drawPng(imageBuffer, imageSize, 0, 0);
     lcd.fillRect(0, 439, 320, 50, TFT_BLACK);
-  }
-  else{
+  } else {
     lcd.fillScreen(TFT_BLACK);
   }
 }
@@ -439,15 +469,15 @@ void manu() {
   //config menu
 
   if (BUTTON_F_STAT == 1) {
-       setBackgraound();
-       Serial.println("Restarting");
-       showMassege("Restarting", TFT_RED , 3);
-       BUTTON_F_STAT = -1;
-       serverReady = false;
-       delay(1000);
+    setBackgraound();
+    Serial.println("Restarting");
+    showMassege("Restarting", TFT_RED, 3);
+    BUTTON_F_STAT = -1;
+    serverReady = false;
+    delay(1000);
 
-       ESP.restart();
-    }
+    ESP.restart();
+  }
 
   if (menuID == 1) {
     if (BUTTON_E_STAT == 1) {  //right
@@ -484,23 +514,21 @@ void manu() {
       Serial.println("Get Image");
       ws.send("FORCE_IMAGE");
       setBackgraound();
-      showMassege("Prossesing", TFT_GREEN , 2);
       BUTTON_B_STAT = -1;
       menuID = 0;
-    }  else if (BUTTON_D_STAT == 1) {
-       Serial.println("Clearing history");
-       ws.send("CLEAR_HISTORY");
-       setBackgraound();
-       showMassege("Clearing history", TFT_GREEN , 2);
-       BUTTON_D_STAT = -1;
-       delay(1000);
+    } else if (BUTTON_D_STAT == 1) {
+      Serial.println("Clearing history");
+      ws.send("CLEAR_HISTORY");
+      setBackgraound();
+      showMassege("Clearing history", TFT_GREEN, 2);
+      BUTTON_D_STAT = -1;
+      delay(1000);
     }
 
-    if(autoRun){
+    if (autoRun) {
       Serial.println("SUBMIT");
       ws.send("SUBMIT");
       setBackgraound();
-      showMassege("Prossesing", TFT_GREEN , 2);
       menuID = 0;
     }
   }
@@ -510,7 +538,6 @@ void manu() {
       Serial.println("SUBMIT");
       ws.send("SUBMIT");
       setBackgraound();
-      showMassege("Prossesing", TFT_GREEN , 2);
       menuID = 0;
       BUTTON_A_STAT = -1;
     } else if (BUTTON_B_STAT == 1) {
@@ -568,10 +595,32 @@ void connectWiFi() {
   showWiFi();
   delay(1000);
 }
+//
+// ==================================================
+// GET IP OF SERVER
+// ==================================================
+//
+
+void discoverServerIP() {
+  udp.begin(UDP_PORT);
+  Serial.println("Listening for Server UDP broadcast...");
+  while (true) {
+    int packetSize = udp.parsePacket();
+    if (packetSize) {
+      WS_SERVER = udp.remoteIP().toString();
+      Serial.print("Discovered Server IP via UDP: ");
+      Serial.println(WS_SERVER);
+      break;
+    }
+    delay(500);
+    Serial.print("?");
+  }
+  udp.stop();  // Close UDP port now that we have the IP
+}
 
 //
 // ==================================================
-// WEBSOCKET
+// CONNECT TO SERVER
 // ==================================================
 //
 
@@ -580,11 +629,14 @@ void connectWebSocket() {
   ws.onMessage(onWebSocketMessage);
   ws.onEvent(onWebSocketEvent);
 
+  discoverServerIP();
+
   Serial.println("Connecting to Server");
+  Serial.println("ws://" + WS_SERVER + ":" + WS_PORT);
   WebSocketString = "Connecting to Server";
   showWebSocket();
 
-  while (!ws.connect(WS_SERVER)) {
+  while (!ws.connect("ws://" + WS_SERVER + ":" + WS_PORT)) {
     Serial.print(".");
     delay(2000);
 
@@ -807,9 +859,14 @@ void onWebSocketMessage(WebsocketsMessage message) {
         } else {
           Serial.println("SUBMIT");
           ws.send("SUBMIT");
-          showMassege("Prossesing", TFT_GREEN, 2);
           menuID = 0;
         }
+        return;
+      }
+
+      //get update
+      if (code == "Update") {
+        showMassege(data, TFT_GREEN, 2);
         return;
       }
 
@@ -863,7 +920,7 @@ void onWebSocketMessage(WebsocketsMessage message) {
 
       Serial.println();
       Serial.println("Assistant config failed!");
-      showMassege("Assistant config failed!", TFT_RED , 2);
+      showMassege("Assistant config failed!", TFT_RED, 2);
       waitingForServer = false;
 
       return;
@@ -969,7 +1026,7 @@ void checkConnections() {
 
     Serial.println();
     Serial.println("WiFi disconnected!");
-    showMassege("WiFi disconnected!", TFT_RED , 2);
+    showMassege("WiFi disconnected!", TFT_RED, 2);
 
     connectWiFi();
 
@@ -981,7 +1038,7 @@ void checkConnections() {
 
     Serial.println();
     Serial.println("WebSocket disconnected!");
-    showMassege("WebSocket disconnected!", TFT_RED , 2);
+    showMassege("WebSocket disconnected!", TFT_RED, 2);
 
     connectWebSocket();
 
@@ -1130,7 +1187,7 @@ void recordAudioToServer() {
   Serial.println();
   Serial.println("=== PUSH TO TALK ===");
   Serial.println("Recording...");
-  showMassege("Recording", TFT_BLUE , 2);
+  showMassege("Recording", TFT_BLUE, 2);
 
   // Record while button is held
   while (digitalRead(BUTTON_A) == LOW) {
@@ -1194,7 +1251,6 @@ void recordAudioToServer() {
   ws.send("AUDIO_END");
 
   Serial.println("Recording sent");
-  showMassege("Prossesing", TFT_GREEN , 2);
   delay(1000);
   serverReady = false;
   free(audioBuffer);
